@@ -1,9 +1,8 @@
-
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { supabase } from "@/integrations/supabase/client";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 
 interface Message {
@@ -17,9 +16,9 @@ const AIChat = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      content: "Hello! I'm here to help you reflect on your thoughts and feelings. What's on your mind today?",
+      content: 'Hello! I\'m your AI journaling assistant. I can help you reflect on your thoughts and feelings. How are you feeling today?',
       isUser: false,
-      timestamp: new Date()
+      timestamp: new Date(),
     }
   ]);
   const [inputMessage, setInputMessage] = useState('');
@@ -33,7 +32,7 @@ const AIChat = () => {
       id: Date.now().toString(),
       content: inputMessage,
       isUser: true,
-      timestamp: new Date()
+      timestamp: new Date(),
     };
 
     setMessages(prev => [...prev, userMessage]);
@@ -41,109 +40,101 @@ const AIChat = () => {
     setIsLoading(true);
 
     try {
-      // Prepare conversation history for context
-      const conversationHistory = messages.map(msg => ({
-        content: msg.content,
-        isUser: msg.isUser
-      }));
+      // For now, we'll implement a simple response system
+      // In the future, this could be connected to an AI service
+      const responses = [
+        "That's really interesting. Can you tell me more about what led to these feelings?",
+        "I understand. It sounds like you're processing a lot right now. How does writing about it make you feel?",
+        "Thank you for sharing that with me. What do you think would help you feel better about this situation?",
+        "That's a valuable insight. Have you considered how this experience might help you grow?",
+        "I appreciate your honesty. Sometimes just expressing our thoughts can be therapeutic. What else is on your mind?",
+        "It sounds like you're being very thoughtful about this. What patterns do you notice in your feelings?",
+      ];
 
-      const { data, error } = await supabase.functions.invoke('gemini-chat', {
-        body: { 
-          message: inputMessage,
-          conversationHistory 
-        }
-      });
+      const randomResponse = responses[Math.floor(Math.random() * responses.length)];
 
-      if (error) {
-        console.error('Supabase function error:', error);
-        throw new Error(error.message || 'Failed to get AI response');
-      }
-
-      if (data?.error) {
-        throw new Error(data.error);
-      }
-
-      const aiMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        content: data.response || "I'm having trouble responding right now. Please try again.",
-        isUser: false,
-        timestamp: new Date()
-      };
-
-      setMessages(prev => [...prev, aiMessage]);
+      setTimeout(() => {
+        const aiResponse: Message = {
+          id: (Date.now() + 1).toString(),
+          content: randomResponse,
+          isUser: false,
+          timestamp: new Date(),
+        };
+        setMessages(prev => [...prev, aiResponse]);
+        setIsLoading(false);
+      }, 1000);
 
     } catch (error) {
-      console.error('Error calling AI:', error);
-      
-      // Add error message to chat
-      const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        content: "I'm having trouble connecting right now. Please check your connection and try again.",
-        isUser: false,
-        timestamp: new Date()
-      };
-      
-      setMessages(prev => [...prev, errorMessage]);
-      
+      console.error('AI chat error:', error);
       toast({
-        title: "AI Chat Error",
-        description: "Unable to get AI response. Please try again.",
+        title: "Error",
+        description: "Failed to get AI response. Please try again.",
         variant: "destructive",
       });
-    } finally {
       setIsLoading(false);
     }
   };
 
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  };
+
   return (
-    <Card>
+    <Card className="h-[600px] flex flex-col overflow-scroll">
       <CardHeader>
-        <CardTitle className="text-[#8766B4]">Chat with AI ↗</CardTitle>
+        <CardTitle className="text-juno-purple">AI Chat Assistant</CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <div className="max-h-60 overflow-y-auto space-y-3">
+      <CardContent className="flex-1 flex flex-col gap-4">
+        <ScrollArea className="flex-1 pr-4">
+          <div className="space-y-4">
             {messages.map((message) => (
               <div
                 key={message.id}
-                className={`p-3 rounded-lg ${
-                  message.isUser
-                    ? 'bg-[#8766B4] text-white ml-4'
-                    : 'bg-muted text-muted-foreground mr-4'
-                }`}
+                className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}
               >
-                <p className="text-sm">{message.content}</p>
+                <div
+                  className={`max-w-[80%] p-3 rounded-lg ${
+                    message.isUser
+                      ? 'bg-juno-purple text-white'
+                      : 'bg-gray-100 text-gray-900'
+                  }`}
+                >
+                  <p className="text-sm">{message.content}</p>
+                  <p className="text-xs opacity-70 mt-1">
+                    {message.timestamp.toLocaleTimeString()}
+                  </p>
+                </div>
               </div>
             ))}
             {isLoading && (
-              <div className="bg-muted p-3 rounded-lg mr-4">
-                <p className="text-sm text-muted-foreground">AI is thinking...</p>
+              <div className="flex justify-start">
+                <div className="bg-gray-100 text-gray-900 max-w-[80%] p-3 rounded-lg">
+                  <p className="text-sm">AI is typing...</p>
+                </div>
               </div>
             )}
           </div>
-          
-          <div className="space-y-2">
-            <Textarea 
-              placeholder="Ask me anything about journaling or your feelings..."
-              className="min-h-[100px]"
-              value={inputMessage}
-              onChange={(e) => setInputMessage(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  sendMessage();
-                }
-              }}
-              disabled={isLoading}
-            />
-            <Button 
-              className="w-full bg-[#8766B4] hover:bg-[#8766B4]/90"
-              onClick={sendMessage}
-              disabled={isLoading || !inputMessage.trim()}
-            >
-              {isLoading ? "Sending..." : "Send Message"}
-            </Button>
-          </div>
+        </ScrollArea>
+        
+        <div className="flex gap-2 sticky bottom-0 bg-white p-4">
+          <Input
+            value={inputMessage}
+            onChange={(e) => setInputMessage(e.target.value)}
+            onKeyPress={handleKeyPress}
+            placeholder="Type your message..."
+            disabled={isLoading}
+            className="flex-1"
+          />
+          <Button
+            onClick={sendMessage}
+            disabled={isLoading || !inputMessage.trim()}
+            className="bg-juno-purple hover:bg-juno-purple/90"
+          >
+            Send
+          </Button>
         </div>
       </CardContent>
     </Card>

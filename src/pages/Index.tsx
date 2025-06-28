@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -24,12 +23,15 @@ const Index = () => {
               gently guide you toward greater self-awareness.
             </p>
             <Button asChild className="bg-[#8766B4] hover:bg-[#8766B4]/90 text-white px-8 py-3 text-lg">
-              <Link to="/signin">Write a Journal</Link>
+              <Link to="/dashboard">Write a Journal</Link>
             </Button>
           </div>
           <div className="relative">
-            <div className="w-full h-96 bg-gradient-to-br from-[#8766B4] via-[#AD5E23] to-[#941F32] rounded-3xl opacity-90"></div>
-            <div className="absolute inset-0 bg-black/10 rounded-3xl"></div>
+              <img 
+                src="/Hero.jpg" 
+                alt="Mind and journaling concept illustration" 
+                className="w-full h-full object-contain rounded-2xl"
+              />
           </div>
         </div>
       </section>

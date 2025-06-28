@@ -1,35 +1,17 @@
-
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { apiClient, JournalEntry } from '@/api/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useSentimentAnalysis } from './useSentimentAnalysis';
 import { useToast } from '@/hooks/use-toast';
-
-export interface JournalEntry {
-  journal_entry_id: number;
-  user_id: string;
-  entry_date: string;
-  text: string;
-  sentiment_score: number | null;
-  ai_suggestion: any;
-  chat_log: any;
-  status: string;
-  word_count: number | null;
-  created_at: string;
-  updated_at: string;
-  user_prompt_id: number | null;
-}
 
 export const useJournalEntries = () => {
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { user } = useAuth();
-  const { analyzeSentiment } = useSentimentAnalysis();
+  const { isAuthenticated } = useAuth();
   const { toast } = useToast();
 
   const fetchEntries = async () => {
-    if (!user) {
+    if (!isAuthenticated) {
       setEntries([]);
       setLoading(false);
       return;
@@ -37,14 +19,8 @@ export const useJournalEntries = () => {
 
     try {
       setLoading(true);
-      console.log('Fetching journal entries for user:', user.id);
-      const { data, error } = await supabase
-        .from('journal_entries')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
+      console.log('Fetching journal entries from backend');
+      const data = await apiClient.getJournals();
       console.log('Fetched journal entries:', data);
       setEntries(data || []);
     } catch (err) {
@@ -56,52 +32,28 @@ export const useJournalEntries = () => {
   };
 
   const createEntry = async (title: string, content: string, mood: string) => {
-    if (!user) throw new Error('User not authenticated');
+    if (!isAuthenticated) throw new Error('User not authenticated');
 
     try {
-      const wordCount = content.split(/\s+/).filter(word => word.length > 0).length;
+      console.log('Creating journal entry:', { title, content, mood });
+      
+      // First create a blank journal entry
+      const newEntry = await apiClient.createJournal();
+      
+      // Then update it with content
       const fullText = `${title}\n\n${content}`;
+      const updatedEntry = await apiClient.updateJournal(newEntry.journal_entry_id, fullText);
       
-      console.log('Creating journal entry:', { title, content, mood, wordCount });
+      console.log('Created and updated journal entry:', updatedEntry);
       
-      const { data, error } = await supabase
-        .from('journal_entries')
-        .insert({
-          user_id: user.id,
-          text: fullText,
-          word_count: wordCount,
-          ai_suggestion: { mood: mood },
-          status: 'active'
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-      
-      console.log('Created journal entry:', data);
-      
-      // Trigger sentiment analysis in the background
-      try {
-        console.log('Starting sentiment analysis for entry:', data.journal_entry_id);
-        await analyzeSentiment(fullText, data.journal_entry_id);
-        console.log('Sentiment analysis completed for entry:', data.journal_entry_id);
-        
-        toast({
-          title: "Entry Created",
-          description: "Your journal entry has been saved and analyzed for sentiment insights.",
-        });
-      } catch (sentimentError) {
-        console.error('Sentiment analysis failed:', sentimentError);
-        toast({
-          title: "Entry Created",
-          description: "Your journal entry has been saved, but sentiment analysis failed.",
-          variant: "destructive",
-        });
-      }
+      toast({
+        title: "Entry Created",
+        description: "Your journal entry has been saved successfully.",
+      });
       
       // Refresh entries after creating
       await fetchEntries();
-      return data;
+      return updatedEntry;
     } catch (err) {
       console.error('Error creating journal entry:', err);
       toast({
@@ -113,15 +65,69 @@ export const useJournalEntries = () => {
     }
   };
 
+  const updateEntry = async (id: number, content: string) => {
+    if (!isAuthenticated) throw new Error('User not authenticated');
+
+    try {
+      console.log('Updating journal entry:', { id, content });
+      const updatedEntry = await apiClient.updateJournal(id, content);
+      console.log('Updated journal entry:', updatedEntry);
+      
+      toast({
+        title: "Entry Updated",
+        description: "Your journal entry has been updated successfully.",
+      });
+      
+      // Refresh entries after updating
+      await fetchEntries();
+      return updatedEntry;
+    } catch (err) {
+      console.error('Error updating journal entry:', err);
+      toast({
+        title: "Error",
+        description: "Failed to update journal entry. Please try again.",
+        variant: "destructive",
+      });
+      throw err;
+    }
+  };
+
+  const deleteEntry = async (id: number) => {
+    if (!isAuthenticated) throw new Error('User not authenticated');
+
+    try {
+      console.log('Deleting journal entry:', id);
+      await apiClient.deleteJournal(id);
+      
+      toast({
+        title: "Entry Deleted",
+        description: "Your journal entry has been deleted successfully.",
+      });
+      
+      // Refresh entries after deleting
+      await fetchEntries();
+    } catch (err) {
+      console.error('Error deleting journal entry:', err);
+      toast({
+        title: "Error",
+        description: "Failed to delete journal entry. Please try again.",
+        variant: "destructive",
+      });
+      throw err;
+    }
+  };
+
   useEffect(() => {
     fetchEntries();
-  }, [user]);
+  }, [isAuthenticated]);
 
   return {
     entries,
     loading,
     error,
     createEntry,
+    updateEntry,
+    deleteEntry,
     refetch: fetchEntries
   };
 };

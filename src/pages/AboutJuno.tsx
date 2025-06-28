@@ -1,9 +1,11 @@
-
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import Header from "@/components/Header";
+import { useAuth } from "@/contexts/AuthContext";
 
 const AboutJuno = () => {
+  const { isAuthenticated } = useAuth();
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -75,7 +77,9 @@ const AboutJuno = () => {
               Start your personal reflection journey today and discover the power of guided self-exploration.
             </p>
             <Button asChild className="bg-[#8766B4] hover:bg-[#8766B4]/90 text-white px-8 py-3 text-lg">
-              <Link to="/signin">Start Journaling</Link>
+              <Link to={isAuthenticated ? "/dashboard" : "/signin"}>
+                {isAuthenticated ? "Start Journaling" : "Sign In to Start Journaling"}
+              </Link>
             </Button>
           </section>
         </div>

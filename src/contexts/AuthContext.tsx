@@ -1,11 +1,9 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
+import { apiClient, User, LoginResponse } from '@/api/client';
 
 interface AuthContextType {
   user: User | null;
-  session: Session | null;
+  session: { token: string; expires_at: string } | null;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<{ error: any }>;
   logout: () => Promise<void>;
@@ -29,64 +27,72 @@ interface AuthProviderProps {
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
+  const [session, setSession] = useState<{ token: string; expires_at: string } | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.email);
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
+    // Check if user is already authenticated on startup
+    const checkAuthStatus = async () => {
+      const token = apiClient.getToken();
+      if (token) {
+        try {
+          // Try to fetch user journals to verify token is still valid
+          await apiClient.getJournals();
+          // Token is valid, but we don't have user info
+          // For now, we'll create a minimal user object
+          // In a real app, you'd want an endpoint to get current user info
+          setSession({ token, expires_at: '' });
+          setUser({ 
+            id: 0, 
+            name: 'Current User', 
+            email: '', 
+            role: 0, 
+            created_at: '', 
+            updated_at: '' 
+          });
+        } catch (error) {
+          // Token is invalid, clear it
+          apiClient.clearToken();
+        }
       }
-    );
-
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('Initial session:', session?.user?.email);
-      setSession(session);
-      setUser(session?.user ?? null);
       setLoading(false);
-    });
+    };
 
-    return () => subscription.unsubscribe();
+    checkAuthStatus();
   }, []);
 
   const login = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      const response: LoginResponse = await apiClient.login(email, password);
+      setSession(response.session);
+      // Create user object from login response
+      setUser({
+        id: response.id,
+        name: '', // Backend doesn't return name in login response
+        email: response.email,
+        role: 0,
+        created_at: '',
+        updated_at: ''
       });
-      return { error };
+      return { error: null };
     } catch (error) {
+      console.error('Login error:', error);
       return { error };
     }
   };
 
   const logout = async () => {
-    await supabase.auth.signOut();
+    await apiClient.logout();
+    setUser(null);
+    setSession(null);
   };
 
   const signup = async (email: string, password: string, name: string) => {
     try {
-      const redirectUrl = `${window.location.origin}/`;
-      
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: redirectUrl,
-          data: {
-            name: name,
-            full_name: name
-          }
-        }
-      });
-      return { error };
+      await apiClient.register(name, email, password);
+      return { error: null };
     } catch (error) {
+      console.error('Signup error:', error);
       return { error };
     }
   };

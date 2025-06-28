@@ -1,5 +1,4 @@
 import { useState, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 export interface SentimentAnalysis {
@@ -25,84 +24,100 @@ export const useSentimentAnalysis = () => {
   const analyzeSentiment = async (text: string, journalEntryId: number) => {
     setLoading(true);
     try {
-      console.log('Starting sentiment analysis for entry:', journalEntryId);
-      const { data, error } = await supabase.functions.invoke('analyze-sentiment', {
-        body: { text, journalEntryId }
-      });
-
-      if (error) {
-        console.error('Sentiment analysis error:', error);
-        // Create a fallback sentiment analysis record
-        await createFallbackSentimentRecord(text, journalEntryId);
-        return null;
-      }
-
-      console.log('Sentiment analysis completed:', data);
+      console.log('Starting local sentiment analysis for entry:', journalEntryId);
+      
+      // Simple local sentiment analysis
+      const analysis = performLocalSentimentAnalysis(text);
+      
+      console.log('Local sentiment analysis completed:', analysis);
       
       toast({
         title: "Sentiment Analysis Complete",
-        description: "Your journal entry has been analyzed for emotional insights.",
+        description: `Detected sentiment: ${analysis.sentiment_label}`,
       });
 
-      return data?.analysis;
+      return analysis;
     } catch (error) {
       console.error('Sentiment analysis error:', error);
-      // Create a fallback sentiment analysis record
-      await createFallbackSentimentRecord(text, journalEntryId);
       return null;
     } finally {
       setLoading(false);
     }
   };
 
-  const createFallbackSentimentRecord = async (text: string, journalEntryId: number) => {
-    try {
-      // Create a simple fallback sentiment analysis
-      const textLength = text.length;
-      const positiveWords = ['happy', 'good', 'great', 'excellent', 'amazing', 'wonderful', 'fantastic', 'love', 'joy'];
-      const negativeWords = ['sad', 'bad', 'terrible', 'awful', 'hate', 'angry', 'frustrated', 'disappointed'];
-      
-      const lowercaseText = text.toLowerCase();
-      const positiveCount = positiveWords.filter(word => lowercaseText.includes(word)).length;
-      const negativeCount = negativeWords.filter(word => lowercaseText.includes(word)).length;
-      
-      let sentiment = 'neutral';
-      let confidence = 0.6;
-      
-      if (positiveCount > negativeCount) {
-        sentiment = 'positive';
-        confidence = Math.min(0.8, 0.5 + (positiveCount * 0.1));
-      } else if (negativeCount > positiveCount) {
-        sentiment = 'negative';
-        confidence = Math.min(0.8, 0.5 + (negativeCount * 0.1));
-      }
+  const performLocalSentimentAnalysis = (text: string) => {
+    // Simple sentiment analysis based on keyword matching
+    const positiveWords = [
+      'happy', 'good', 'great', 'excellent', 'amazing', 'wonderful', 'fantastic', 
+      'love', 'joy', 'excited', 'pleased', 'satisfied', 'grateful', 'blessed',
+      'awesome', 'brilliant', 'cheerful', 'delighted', 'thrilled'
+    ];
+    
+    const negativeWords = [
+      'sad', 'bad', 'terrible', 'awful', 'hate', 'angry', 'frustrated', 
+      'disappointed', 'upset', 'depressed', 'anxious', 'worried', 'stressed',
+      'horrible', 'disgusted', 'furious', 'miserable', 'devastated', 'heartbroken'
+    ];
 
-      console.log('Creating fallback sentiment record:', { sentiment, confidence, journalEntryId });
+    const neutralWords = [
+      'okay', 'fine', 'normal', 'average', 'typical', 'usual', 'regular',
+      'standard', 'ordinary', 'common'
+    ];
 
-      const { data, error } = await supabase
-        .from('sentiment_analysis')
-        .insert({
-          journal_entry_id: journalEntryId,
-          sentiment_label: sentiment,
-          confidence_score: confidence,
-          emotions: {
-            joy: sentiment === 'positive' ? confidence : 0.2,
-            sadness: sentiment === 'negative' ? confidence : 0.2,
-            anger: sentiment === 'negative' ? confidence * 0.5 : 0.1,
-            fear: 0.1,
-            surprise: 0.2
-          },
-          keywords: extractSimpleKeywords(text)
-        });
+    const lowercaseText = text.toLowerCase();
+    const words = lowercaseText.split(/\s+/);
+    
+    let positiveCount = 0;
+    let negativeCount = 0;
+    let neutralCount = 0;
 
-      if (error) {
-        console.error('Error creating fallback sentiment record:', error);
-      } else {
-        console.log('Fallback sentiment record created:', data);
-      }
-    } catch (error) {
-      console.error('Error in createFallbackSentimentRecord:', error);
+    words.forEach(word => {
+      if (positiveWords.some(pw => word.includes(pw))) positiveCount++;
+      if (negativeWords.some(nw => word.includes(nw))) negativeCount++;
+      if (neutralWords.some(neut => word.includes(neut))) neutralCount++;
+    });
+
+    let sentiment = 'neutral';
+    let confidence = 0.6;
+    let emotions = {
+      joy: 0.2,
+      sadness: 0.2,
+      anger: 0.1,
+      fear: 0.1,
+      surprise: 0.2
+    };
+
+    if (positiveCount > negativeCount && positiveCount > neutralCount) {
+      sentiment = 'positive';
+      confidence = Math.min(0.9, 0.5 + (positiveCount * 0.1));
+      emotions = {
+        joy: confidence,
+        sadness: 0.1,
+        anger: 0.05,
+        fear: 0.05,
+        surprise: 0.3
+      };
+    } else if (negativeCount > positiveCount && negativeCount > neutralCount) {
+      sentiment = 'negative';
+      confidence = Math.min(0.9, 0.5 + (negativeCount * 0.1));
+      emotions = {
+        joy: 0.1,
+        sadness: confidence,
+        anger: confidence * 0.6,
+        fear: confidence * 0.4,
+        surprise: 0.1
+      };
     }
+
+    return {
+      id: Date.now().toString(),
+      journal_entry_id: 0, // Will be set by caller
+      sentiment_label: sentiment,
+      confidence_score: confidence,
+      emotions,
+      keywords: extractSimpleKeywords(text),
+      analyzed_at: new Date().toISOString()
+    };
   };
 
   const extractSimpleKeywords = (text: string): string[] => {
@@ -111,51 +126,20 @@ export const useSentimentAnalysis = () => {
       .split(/\s+/)
       .filter(word => word.length > 3);
     
-    const uniqueWords = [...new Set(words)];
+    // Remove common stop words
+    const stopWords = ['this', 'that', 'with', 'have', 'will', 'from', 'they', 'been', 'said', 'each', 'which', 'their', 'time', 'would', 'about'];
+    const filteredWords = words.filter(word => !stopWords.includes(word));
+    
+    const uniqueWords = [...new Set(filteredWords)];
     return uniqueWords.slice(0, 5); // Return first 5 unique words
   };
 
   const getSentimentHistory = useCallback(async (userId: string) => {
     try {
-      console.log('Fetching sentiment history for user:', userId);
-      
-      const { data, error } = await supabase
-        .from('sentiment_analysis')
-        .select('*')
-        .eq('user_id', userId)
-        .order('analyzed_at', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching sentiment history:', error);
-        throw error;
-      }
-      
-      console.log('Raw sentiment data from database:', data);
-      
-      if (!data || data.length === 0) {
-        console.log('No sentiment data found for user');
-        return [];
-      }
-      
-      // Transform the data to match our interface
-      const transformedData: SentimentAnalysis[] = data.map(item => ({
-        id: item.id,
-        journal_entry_id: item.journal_entry_id,
-        sentiment_label: item.sentiment_label,
-        confidence_score: item.confidence_score,
-        emotions: item.emotions as {
-          joy: number;
-          sadness: number;
-          anger: number;
-          fear: number;
-          surprise: number;
-        } | null,
-        keywords: item.keywords || [],
-        analyzed_at: item.analyzed_at
-      }));
-
-      console.log('Transformed sentiment data:', transformedData);
-      return transformedData;
+      console.log('Local sentiment history not implemented for user:', userId);
+      // For now, return empty array as we don't have persistent storage
+      // In a real implementation, this could be stored in localStorage or sent to backend
+      return [];
     } catch (error) {
       console.error('Error fetching sentiment history:', error);
       return [];
