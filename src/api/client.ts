@@ -1,5 +1,6 @@
 // API client for the custom FastAPI backend
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://0.0.0.0:8000';
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL;
 
 export interface User {
   id: number;
@@ -49,7 +50,7 @@ class ApiClient {
   constructor(baseUrl: string = API_BASE_URL) {
     this.baseUrl = baseUrl;
     // Check for stored token on initialization
-    this.token = localStorage.getItem('auth_token');
+    this.token = localStorage.getItem("auth_token");
   }
 
   private async request<T>(
@@ -58,7 +59,7 @@ class ApiClient {
   ): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
     const headers: HeadersInit = {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       ...options.headers,
     };
 
@@ -82,18 +83,18 @@ class ApiClient {
 
   setToken(token: string) {
     this.token = token;
-    localStorage.setItem('auth_token', token);
+    localStorage.setItem("auth_token", token);
   }
 
   clearToken() {
     this.token = null;
-    localStorage.removeItem('auth_token');
+    localStorage.removeItem("auth_token");
   }
 
   // Auth endpoints
   async register(name: string, email: string, password: string): Promise<User> {
-    return this.request<User>('/login/register', {
-      method: 'POST',
+    return this.request<User>("/login/register", {
+      method: "POST",
       body: JSON.stringify({ name, email, password }),
     });
   }
@@ -101,14 +102,14 @@ class ApiClient {
   async login(email: string, password: string): Promise<LoginResponse> {
     // FastAPI uses Basic Auth for login
     const credentials = btoa(`${email}:${password}`);
-    const response = await this.request<LoginResponse>('/login', {
-      method: 'POST',
+    const response = await this.request<LoginResponse>("/login", {
+      method: "POST",
       headers: {
         Authorization: `Basic ${credentials}`,
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
     });
-    
+
     // Store the token
     this.setToken(response.session.token);
     return response;
@@ -116,31 +117,31 @@ class ApiClient {
 
   async logout(): Promise<void> {
     this.clearToken();
-    // Note: The backend doesn't have a logout endpoint, 
+    // Note: The backend doesn't have a logout endpoint,
     // so we just clear the token locally
   }
 
   // Journal endpoints
   async getJournals(): Promise<JournalEntry[]> {
-    return this.request<JournalEntry[]>('/journals');
+    return this.request<JournalEntry[]>("/journals");
   }
 
   async createJournal(): Promise<JournalEntry> {
-    return this.request<JournalEntry>('/journals', {
-      method: 'POST',
+    return this.request<JournalEntry>("/journals", {
+      method: "POST",
     });
   }
 
   async updateJournal(id: number, content: string): Promise<JournalEntry> {
     return this.request<JournalEntry>(`/journals/${id}`, {
-      method: 'PUT',
+      method: "PUT",
       body: JSON.stringify({ content }),
     });
   }
 
   async deleteJournal(id: number): Promise<void> {
     return this.request<void>(`/journals/${id}`, {
-      method: 'DELETE',
+      method: "DELETE",
     });
   }
 
@@ -155,4 +156,4 @@ class ApiClient {
 }
 
 // Export a singleton instance
-export const apiClient = new ApiClient(); 
+export const apiClient = new ApiClient();
