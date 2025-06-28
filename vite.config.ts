@@ -1,4 +1,3 @@
-
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
@@ -11,20 +10,31 @@ export default defineConfig(({ mode }) => ({
     port: 8080,
     watch: {
       usePolling: false,
-      ignored: ['**/node_modules/**', '**/.git/**']
-    }
+      ignored: ["**/node_modules/**", "**/.git/**"],
+    },
   },
-  plugins: [
-    react(),
-    mode === 'development' &&
-    componentTagger(),
-  ].filter(Boolean),
+  plugins: [react(), mode === "development" && componentTagger()].filter(
+    Boolean
+  ),
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    outDir: "dist",
+    assetsDir: "assets",
+    sourcemap: false,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ["react", "react-dom"],
+        },
+      },
+    },
+  },
+  base: "/", // Use absolute paths for S3
   optimizeDeps: {
-    exclude: ['lovable-tagger']
-  }
+    exclude: ["lovable-tagger"],
+  },
 }));

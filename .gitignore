@@ -22,4 +22,20 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Environment files
 .env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Build files
+build/
+coverage/
+
+# AWS
+.aws/
+
+# GitHub Actions
+.github/workflows/*.yml.backup
