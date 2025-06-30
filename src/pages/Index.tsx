@@ -68,7 +68,7 @@ const Index = () => {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 gap-6">
             {/* Daily Journal Card */}
             <div className="bg-[#ECAD61] p-6 rounded-3xl">
               <h3 className="text-xl font-semibold text-white mb-2">
@@ -111,7 +111,7 @@ const Index = () => {
             </div>
 
             {/* Mood Tracker Card */}
-            <div className="bg-[#ECAD61] p-6 rounded-3xl">
+            <div className="bg-[#8766B4] p-6 rounded-3xl">
               <h3 className="text-xl font-semibold text-white mb-4">
                 Weekly Mood Tracker
               </h3>
@@ -189,114 +189,6 @@ const Index = () => {
                       tracking system. Monitor weekly trends, identify triggers,
                       and gain insights into your emotional well-being over
                       time.
-                    </DialogDescription>
-                  </DialogHeader>
-                </DialogContent>
-              </Dialog>
-            </div>
-
-            {/* Social Media Marketing Card */}
-            <div className="bg-black p-6 rounded-3xl text-white">
-              <h3 className="text-xl font-semibold mb-4">
-                Social Media Marketing
-              </h3>
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="text-black border-white bg-white hover:bg-gray-50"
-                  >
-                    Learn more
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Social Media Marketing</DialogTitle>
-                    <DialogDescription>
-                      Expand your digital presence with our comprehensive social
-                      media marketing solutions. We help you connect with your
-                      audience, build brand awareness, and drive engagement
-                      across all major platforms.
-                    </DialogDescription>
-                  </DialogHeader>
-                </DialogContent>
-              </Dialog>
-            </div>
-
-            {/* Email Marketing Card */}
-            <div className="bg-muted p-6 rounded-3xl">
-              <h3 className="text-xl font-semibold mb-4">Email Marketing</h3>
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="text-black border-gray-300 bg-white hover:bg-gray-50"
-                  >
-                    Learn more
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Email Marketing</DialogTitle>
-                    <DialogDescription>
-                      Reach your audience directly with personalized email
-                      campaigns. Our email marketing tools help you create
-                      engaging content, automate workflows, and track
-                      performance to maximize your ROI.
-                    </DialogDescription>
-                  </DialogHeader>
-                </DialogContent>
-              </Dialog>
-            </div>
-
-            {/* Content Creation Card */}
-            <div className="bg-[#BFDF5C] p-6 rounded-3xl">
-              <h3 className="text-xl font-semibold mb-4">Content Creation</h3>
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="text-black border-gray-300 bg-white hover:bg-gray-50"
-                  >
-                    Learn more
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Content Creation</DialogTitle>
-                    <DialogDescription>
-                      Bring your ideas to life with our professional content
-                      creation services. From blog posts to visual content, we
-                      help you craft compelling stories that resonate with your
-                      audience and drive results.
-                    </DialogDescription>
-                  </DialogHeader>
-                </DialogContent>
-              </Dialog>
-            </div>
-
-            {/* Analytics and Tracking Card */}
-            <div className="bg-black p-6 rounded-3xl text-white">
-              <h3 className="text-xl font-semibold mb-4">
-                Analytics and Tracking
-              </h3>
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="text-black border-white bg-white hover:bg-gray-50"
-                  >
-                    Learn more
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Analytics and Tracking</DialogTitle>
-                    <DialogDescription>
-                      Make data-driven decisions with our comprehensive
-                      analytics and tracking solutions. Monitor performance
-                      metrics, understand user behavior, and optimize your
-                      strategies for better results.
                     </DialogDescription>
                   </DialogHeader>
                 </DialogContent>
