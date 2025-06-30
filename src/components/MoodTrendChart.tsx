@@ -20,25 +20,25 @@ interface MoodDataPoint {
 // Mood mapping - you can adjust these based on your mood selector values
 const MOOD_SCORES = {
   "very-happy": 10,
-  "happy": 8,
-  "good": 7,
-  "okay": 5,
-  "sad": 3,
+  happy: 8,
+  good: 7,
+  okay: 5,
+  sad: 3,
   "very-sad": 1,
-  "angry": 2,
-  "excited": 9,
-  "calm": 6,
-  "stressed": 3,
-  "anxious": 2,
-  "grateful": 8,
-  "proud": 9,
-  "disappointed": 3,
-  "confused": 4,
-  "energetic": 8,
-  "tired": 4,
-  "peaceful": 7,
-  "frustrated": 3,
-  "hopeful": 7,
+  angry: 2,
+  excited: 9,
+  calm: 6,
+  stressed: 3,
+  anxious: 2,
+  grateful: 8,
+  proud: 9,
+  disappointed: 3,
+  confused: 4,
+  energetic: 8,
+  tired: 4,
+  peaceful: 7,
+  frustrated: 3,
+  hopeful: 7,
 };
 
 const chartConfig = {
@@ -81,27 +81,32 @@ const MoodTrendChart = () => {
     }
 
     // Group entries by date and calculate average mood for each day
-    const moodByDate: { [key: string]: { scores: number[]; labels: string[] } } = {};
-    
+    const moodByDate: {
+      [key: string]: { scores: number[]; labels: string[] };
+    } = {};
+
     entries.forEach((entry) => {
       // Extract mood from entry text or use a default approach
       // For now, we'll simulate mood extraction from the text content
       // In a real app, you might store mood separately or extract it differently
       const dateKey = new Date(entry.created_at).toLocaleDateString();
-      
+
       if (!moodByDate[dateKey]) {
         moodByDate[dateKey] = { scores: [], labels: [] };
       }
-      
+
       // For demo purposes, let's generate mood based on sentiment score if available
       let moodScore = 5; // Default neutral
-      if (entry.sentiment_score !== null && entry.sentiment_score !== undefined) {
+      if (
+        entry.sentiment_score !== null &&
+        entry.sentiment_score !== undefined
+      ) {
         moodScore = Math.round(entry.sentiment_score);
       } else {
         // Generate a random mood score for demo (remove this in production)
         moodScore = Math.floor(Math.random() * 10) + 1;
       }
-      
+
       moodByDate[dateKey].scores.push(moodScore);
       moodByDate[dateKey].labels.push(getMoodLabel(moodScore));
     });
@@ -109,7 +114,9 @@ const MoodTrendChart = () => {
     // Convert to chart data
     const chartData: MoodDataPoint[] = Object.entries(moodByDate)
       .map(([date, data]) => {
-        const averageScore = data.scores.reduce((sum, score) => sum + score, 0) / data.scores.length;
+        const averageScore =
+          data.scores.reduce((sum, score) => sum + score, 0) /
+          data.scores.length;
         return {
           date: new Date(date).toLocaleDateString("en-US", {
             month: "short",
@@ -124,9 +131,11 @@ const MoodTrendChart = () => {
       .slice(-14); // Last 14 days
 
     setMoodTrendData(chartData);
-    
+
     // Calculate overall average mood
-    const overallAverage = chartData.reduce((sum, point) => sum + point.moodScore, 0) / chartData.length;
+    const overallAverage =
+      chartData.reduce((sum, point) => sum + point.moodScore, 0) /
+      chartData.length;
     setAverageMood(Math.round(overallAverage * 10) / 10);
   }, [entries]);
 
@@ -161,7 +170,9 @@ const MoodTrendChart = () => {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">-</div>
-          <p className="text-xs text-muted-foreground">No mood data available</p>
+          <p className="text-xs text-muted-foreground">
+            No mood data available
+          </p>
         </CardContent>
       </Card>
     );
@@ -190,24 +201,18 @@ const MoodTrendChart = () => {
             </div>
           </div>
         </div>
-        
+
         <div className="h-[80px] w-full">
           <ChartContainer config={chartConfig}>
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={moodTrendData}>
-                <XAxis 
-                  dataKey="date" 
-                  hide 
-                />
-                <YAxis 
-                  domain={[0, 10]} 
-                  hide 
-                />
+                <XAxis dataKey="date" hide />
+                <YAxis domain={[0, 10]} hide />
                 <ChartTooltip
                   content={<ChartTooltipContent />}
                   formatter={(value: any, name: any) => [
                     `${value}/10`,
-                    "Mood Score"
+                    "Mood Score",
                   ]}
                   labelFormatter={(label) => `Date: ${label}`}
                 />
@@ -223,10 +228,13 @@ const MoodTrendChart = () => {
             </ResponsiveContainer>
           </ChartContainer>
         </div>
-        
+
         <div className="flex justify-between text-xs text-muted-foreground mt-2">
           <span>Past {moodTrendData.length} days</span>
-          <span>{moodTrendData.reduce((sum, point) => sum + point.entryCount, 0)} entries</span>
+          <span>
+            {moodTrendData.reduce((sum, point) => sum + point.entryCount, 0)}{" "}
+            entries
+          </span>
         </div>
       </CardContent>
     </Card>
