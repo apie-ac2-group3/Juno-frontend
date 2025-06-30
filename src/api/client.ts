@@ -1,6 +1,5 @@
 // API client for the custom FastAPI backend
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL;
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export interface User {
   id: number;
@@ -34,6 +33,11 @@ export interface JournalEntry {
   updated_at: string;
 }
 
+export interface AnalysisResponse {
+  sentimentScore: number;
+  counsel: string;
+}
+
 export interface LoginResponse {
   id: number;
   email: string;
@@ -58,9 +62,9 @@ class ApiClient {
     options: RequestInit = {}
   ): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
-    const headers: HeadersInit = {
+    const headers: Record<string, string> = {
       "Content-Type": "application/json",
-      ...options.headers,
+      ...(options.headers as Record<string, string>),
     };
 
     // Add Authorization header if token exists
@@ -142,6 +146,12 @@ class ApiClient {
   async deleteJournal(id: number): Promise<void> {
     return this.request<void>(`/journals/${id}`, {
       method: "DELETE",
+    });
+  }
+
+  async analyzeJournal(id: number): Promise<AnalysisResponse> {
+    return this.request<AnalysisResponse>(`/analyze/${id}`, {
+      method: "POST",
     });
   }
 

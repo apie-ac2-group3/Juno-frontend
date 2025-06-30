@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,14 +9,20 @@ import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/Header";
 import MoodSelector from "@/components/MoodSelector";
 import AIChat from "@/components/AIChat";
+import JournalAnalysis from "@/components/JournalAnalysis";
 import { useAuth } from "@/contexts/AuthContext";
 import { useJournalEntries } from "@/hooks/useJournalEntries";
+import { AnalysisResponse } from "@/api/client";
 
 const AddJournal = () => {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [mood, setMood] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState<AnalysisResponse | null>(
+    null
+  );
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { isAuthenticated, loading: authLoading } = useAuth();
@@ -26,7 +31,7 @@ const AddJournal = () => {
   // Redirect to signin if not authenticated
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
-      navigate('/signin');
+      navigate("/signin");
     }
   }, [isAuthenticated, authLoading, navigate]);
 
@@ -42,18 +47,50 @@ const AddJournal = () => {
     }
 
     setIsSaving(true);
-    
+    setIsAnalyzing(true);
+    setAnalysisResult(null);
+
     try {
-      await createEntry(title, content, mood);
-      
+      // Create the journal entry
+      const result = await createEntry(title, content, mood);
+
       toast({
         title: "Journal entry saved!",
         description: "Your thoughts have been recorded successfully.",
       });
-      
-      navigate("/dashboard");
+
+      // Set analysis result if available
+      if (result.analysis) {
+        setAnalysisResult(result.analysis);
+        setIsAnalyzing(false);
+
+        // Show analysis completion toast
+        toast({
+          title: "AI Analysis Complete!",
+          description: "Your entry has been analyzed with insights below.",
+        });
+
+        // Auto-navigate to dashboard after showing analysis for a moment
+        setTimeout(() => {
+          navigate("/dashboard", {
+            state: {
+              newEntry: result.entry,
+              analysis: result.analysis,
+              showAnalysis: true,
+            },
+          });
+        }, 3000);
+      } else {
+        // If no analysis, navigate immediately
+        navigate("/dashboard", {
+          state: {
+            newEntry: result.entry,
+            showSuccess: true,
+          },
+        });
+      }
     } catch (error) {
-      console.error('Error saving entry:', error);
+      console.error("Error saving entry:", error);
       toast({
         title: "Error saving entry",
         description: "Please try again.",
@@ -61,6 +98,9 @@ const AddJournal = () => {
       });
     } finally {
       setIsSaving(false);
+      if (!analysisResult) {
+        setIsAnalyzing(false);
+      }
     }
   };
 
@@ -89,13 +129,15 @@ const AddJournal = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      
+
       <div className="max-w-4xl mx-auto p-6">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Add Journal Entry</h1>
+          <h1 className="text-3xl font-bold text-foreground mb-2">
+            Add Journal Entry
+          </h1>
           <p className="text-muted-foreground">
-            Today, I give myself permission to pause, reflect, and express. My 
-            thoughts are valid, my feelings matter, and through journaling, I 
+            Today, I give myself permission to pause, reflect, and express. My
+            thoughts are valid, my feelings matter, and through journaling, I
             gain clarity and peace. This moment is mine, and I embrace it fully.
           </p>
         </div>
@@ -117,7 +159,7 @@ const AddJournal = () => {
               </CardHeader>
               <CardContent className="space-y-6">
                 <MoodSelector selectedMood={mood} onMoodChange={setMood} />
-                
+
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="space-y-2">
                     <Label htmlFor="title">Entry Title</Label>
@@ -129,7 +171,7 @@ const AddJournal = () => {
                       className="text-lg"
                     />
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="content">Your Thoughts</Label>
                     <Textarea
@@ -140,26 +182,26 @@ const AddJournal = () => {
                       className="min-h-[300px] text-base leading-relaxed"
                     />
                   </div>
-                  
+
                   <div className="flex gap-4">
-                    <Button 
-                      type="submit" 
+                    <Button
+                      type="submit"
                       className="bg-[#8766B4] hover:bg-[#8766B4]/90 flex-1"
                       disabled={isSaving}
                     >
                       {isSaving ? "Saving..." : "Save Entry"}
                     </Button>
-                    <Button 
-                      type="button" 
-                      variant="outline" 
+                    <Button
+                      type="button"
+                      variant="outline"
                       onClick={handleDraft}
                       disabled={isSaving}
                     >
                       Save as Draft
                     </Button>
-                    <Button 
-                      type="button" 
-                      variant="outline" 
+                    <Button
+                      type="button"
+                      variant="outline"
                       onClick={() => navigate("/dashboard")}
                     >
                       Cancel
@@ -168,6 +210,24 @@ const AddJournal = () => {
                 </form>
               </CardContent>
             </Card>
+
+            {/* Analysis Results */}
+            {analysisResult && (
+              <div className="space-y-6">
+                <JournalAnalysis
+                  analysisResult={analysisResult}
+                  isLoading={isAnalyzing}
+                />
+                <div className="text-center text-sm text-muted-foreground">
+                  Redirecting to dashboard in a moment...
+                </div>
+              </div>
+            )}
+
+            {/* Show loading state when analyzing */}
+            {isAnalyzing && !analysisResult && (
+              <JournalAnalysis analysisResult={null} isLoading={true} />
+            )}
           </div>
 
           {/* AI Chat Sidebar */}
