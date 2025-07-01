@@ -1,6 +1,82 @@
 // API client for the custom FastAPI backend
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
+// Utility function to create user-friendly error messages
+const createUserFriendlyError = (
+  status: number,
+  responseText: string
+): string => {
+  // Try to parse JSON error response
+  let errorDetail = "";
+  try {
+    const errorObj = JSON.parse(responseText);
+    errorDetail = errorObj.detail || errorObj.message || "";
+  } catch {
+    errorDetail = responseText;
+  }
+
+  // Map common HTTP status codes to user-friendly messages
+  switch (status) {
+    case 400:
+      if (errorDetail.toLowerCase().includes("password")) {
+        return "Please check your password and try again.";
+      }
+      if (errorDetail.toLowerCase().includes("email")) {
+        return "Please check your email address and try again.";
+      }
+      return "Please check your information and try again.";
+
+    case 401:
+      return "Your session has expired. Please sign in again.";
+
+    case 403:
+      return "You don't have permission to perform this action.";
+
+    case 404:
+      if (errorDetail.toLowerCase().includes("user")) {
+        return "Account not found. Please check your credentials or sign up.";
+      }
+      if (
+        errorDetail.toLowerCase().includes("journal") ||
+        errorDetail.toLowerCase().includes("entry")
+      ) {
+        return "Journal entry not found.";
+      }
+      return "The requested information could not be found.";
+
+    case 409:
+      if (errorDetail.toLowerCase().includes("email")) {
+        return "An account with this email already exists. Please sign in instead.";
+      }
+      return "This information already exists. Please try something different.";
+
+    case 422:
+      return "Please check your information and try again.";
+
+    case 429:
+      return "Too many requests. Please wait a moment and try again.";
+
+    case 500:
+      return "Something went wrong on our end. Please try again later.";
+
+    case 502:
+    case 503:
+    case 504:
+      return "The service is temporarily unavailable. Please try again later.";
+
+    default:
+      // For unknown errors, provide a generic but helpful message
+      if (
+        errorDetail &&
+        !errorDetail.includes("{") &&
+        !errorDetail.includes("API Error")
+      ) {
+        return errorDetail;
+      }
+      return "Something went wrong. Please try again later.";
+  }
+};
+
 export interface User {
   id: number;
   name: string;
@@ -78,8 +154,12 @@ class ApiClient {
     });
 
     if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`API Error: ${response.status} - ${error}`);
+      const errorText = await response.text();
+      const userFriendlyMessage = createUserFriendlyError(
+        response.status,
+        errorText
+      );
+      throw new Error(userFriendlyMessage);
     }
 
     return response.json();

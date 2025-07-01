@@ -72,9 +72,13 @@ export const useJournalEntries = () => {
       return { entry: updatedEntry, analysis: analysisResult };
     } catch (err) {
       console.error("Error creating journal entry:", err);
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : "Failed to create journal entry. Please try again.";
       toast({
         title: "Error",
-        description: "Failed to create journal entry. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
       throw err;
@@ -99,9 +103,13 @@ export const useJournalEntries = () => {
       return updatedEntry;
     } catch (err) {
       console.error("Error updating journal entry:", err);
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : "Failed to update journal entry. Please try again.";
       toast({
         title: "Error",
-        description: "Failed to update journal entry. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
       throw err;
@@ -124,9 +132,13 @@ export const useJournalEntries = () => {
       await fetchEntries();
     } catch (err) {
       console.error("Error deleting journal entry:", err);
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : "Failed to delete journal entry. Please try again.";
       toast({
         title: "Error",
-        description: "Failed to delete journal entry. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
       throw err;

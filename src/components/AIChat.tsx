@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,13 +15,14 @@ interface Message {
 const AIChat = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
-      id: '1',
-      content: 'Hello! I\'m your AI journaling assistant. I can help you reflect on your thoughts and feelings. How are you feeling today?',
+      id: "1",
+      content:
+        "Hello! I'm your AI journaling assistant. I can help you reflect on your thoughts and feelings. How are you feeling today?",
       isUser: false,
       timestamp: new Date(),
-    }
+    },
   ]);
-  const [inputMessage, setInputMessage] = useState('');
+  const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -35,8 +36,8 @@ const AIChat = () => {
       timestamp: new Date(),
     };
 
-    setMessages(prev => [...prev, userMessage]);
-    setInputMessage('');
+    setMessages((prev) => [...prev, userMessage]);
+    setInputMessage("");
     setIsLoading(true);
 
     try {
@@ -51,7 +52,8 @@ const AIChat = () => {
         "It sounds like you're being very thoughtful about this. What patterns do you notice in your feelings?",
       ];
 
-      const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+      const randomResponse =
+        responses[Math.floor(Math.random() * responses.length)];
 
       setTimeout(() => {
         const aiResponse: Message = {
@@ -60,15 +62,18 @@ const AIChat = () => {
           isUser: false,
           timestamp: new Date(),
         };
-        setMessages(prev => [...prev, aiResponse]);
+        setMessages((prev) => [...prev, aiResponse]);
         setIsLoading(false);
       }, 1000);
-
     } catch (error) {
-      console.error('AI chat error:', error);
+      console.error("AI chat error:", error);
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to get AI response. Please try again.";
       toast({
         title: "Error",
-        description: "Failed to get AI response. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
       setIsLoading(false);
@@ -76,7 +81,7 @@ const AIChat = () => {
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       sendMessage();
     }
@@ -93,13 +98,15 @@ const AIChat = () => {
             {messages.map((message) => (
               <div
                 key={message.id}
-                className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}
+                className={`flex ${
+                  message.isUser ? "justify-end" : "justify-start"
+                }`}
               >
                 <div
                   className={`max-w-[80%] p-3 rounded-lg ${
                     message.isUser
-                      ? 'bg-juno-purple text-white'
-                      : 'bg-gray-100 text-gray-900'
+                      ? "bg-juno-purple text-white"
+                      : "bg-gray-100 text-gray-900"
                   }`}
                 >
                   <p className="text-sm">{message.content}</p>
@@ -118,7 +125,7 @@ const AIChat = () => {
             )}
           </div>
         </ScrollArea>
-        
+
         <div className="flex gap-2 sticky bottom-0 bg-white p-4">
           <Input
             value={inputMessage}
