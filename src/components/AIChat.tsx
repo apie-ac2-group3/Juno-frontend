@@ -90,7 +90,7 @@ const AIChat = () => {
   return (
     <Card className="h-[600px] flex flex-col overflow-scroll">
       <CardHeader>
-        <CardTitle className="text-juno-purple">AI Chat Assistant</CardTitle>
+        <CardTitle className="text-juno-purple">AI Companion</CardTitle>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col gap-4">
         <ScrollArea className="flex-1 pr-4">
