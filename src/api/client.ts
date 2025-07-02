@@ -162,14 +162,30 @@ class ApiClient {
       throw new Error(userFriendlyMessage);
     }
 
-    // Handle empty responses (like DELETE operations)
+    // Handle 204 No Content responses (like DELETE operations)
+    if (response.status === 204) {
+      return null as T;
+    }
+
+    // Handle empty responses or responses without content
     const contentType = response.headers.get("content-type");
     if (contentType && contentType.includes("application/json")) {
       return response.json();
     } else {
-      // For non-JSON responses or empty responses, return null
+      // For non-JSON responses, try to get text but don't parse as JSON
       const text = await response.text();
-      return text ? JSON.parse(text) : null;
+      if (!text || text.trim() === "") {
+        return null as T;
+      }
+      // Only try to parse as JSON if the text looks like JSON
+      if (text.trim().startsWith("{") || text.trim().startsWith("[")) {
+        try {
+          return JSON.parse(text);
+        } catch {
+          return null as T;
+        }
+      }
+      return null as T;
     }
   }
 
