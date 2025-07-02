@@ -121,17 +121,24 @@ export const useJournalEntries = () => {
 
     try {
       console.log("Deleting journal entry:", id);
+
+      // Optimistically remove the entry from the UI first
+      setEntries((prev) =>
+        prev.filter((entry) => entry.journal_entry_id !== id)
+      );
+
       await apiClient.deleteJournal(id);
 
       toast({
         title: "Entry Deleted",
         description: "Your journal entry has been deleted successfully.",
       });
-
-      // Refresh entries after deleting
-      await fetchEntries();
     } catch (err) {
       console.error("Error deleting journal entry:", err);
+
+      // If the delete failed, refresh the entries to restore the UI state
+      await fetchEntries();
+
       const errorMessage =
         err instanceof Error
           ? err.message

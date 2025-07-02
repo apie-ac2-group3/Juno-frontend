@@ -162,7 +162,15 @@ class ApiClient {
       throw new Error(userFriendlyMessage);
     }
 
-    return response.json();
+    // Handle empty responses (like DELETE operations)
+    const contentType = response.headers.get("content-type");
+    if (contentType && contentType.includes("application/json")) {
+      return response.json();
+    } else {
+      // For non-JSON responses or empty responses, return null
+      const text = await response.text();
+      return text ? JSON.parse(text) : null;
+    }
   }
 
   setToken(token: string) {
