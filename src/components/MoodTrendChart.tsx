@@ -202,7 +202,7 @@ const MoodTrendChart = () => {
           </div>
         </div>
 
-        <div className="h-[80px] w-full">
+        {/* <div className="h-[80px] w-full">
           <ChartContainer config={chartConfig}>
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={moodTrendData}>
@@ -227,7 +227,7 @@ const MoodTrendChart = () => {
               </AreaChart>
             </ResponsiveContainer>
           </ChartContainer>
-        </div>
+        </div> */}
 
         <div className="flex justify-between text-xs text-muted-foreground mt-2">
           <span>Past {moodTrendData.length} days</span>
