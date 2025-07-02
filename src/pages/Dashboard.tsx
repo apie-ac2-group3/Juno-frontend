@@ -88,6 +88,9 @@ const Dashboard = () => {
     entry: JournalEntryType;
     analysis: AnalysisResponse;
   } | null>(null);
+  const [deletedEntryIds, setDeletedEntryIds] = useState<Set<number>>(
+    new Set()
+  );
 
   const { isAuthenticated, loading: authLoading } = useAuth();
   const { entries, loading: entriesLoading } = useJournalEntries();
@@ -153,8 +156,19 @@ const Dashboard = () => {
       "Your journal entry has been saved successfully. Keep writing to track your progress!",
   };
 
+  // Handle optimistic delete
+  const handleOptimisticDelete = (entryId: number) => {
+    setDeletedEntryIds((prev) => new Set([...prev, entryId]));
+  };
+
+  // Reset deleted entries when entries change (successful delete from backend)
+  useEffect(() => {
+    setDeletedEntryIds(new Set());
+  }, [entries]);
+
   // Transform entries to match the expected format for JournalEntry component
   const transformedEntries = entries
+    .filter((entry) => !deletedEntryIds.has(entry.journal_entry_id)) // Filter out optimistically deleted entries
     .map((entry) => {
       const lines = entry.text?.split("\n") || [];
       const title = lines[0] || "Untitled Entry";
@@ -181,15 +195,6 @@ const Dashboard = () => {
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
     });
-
-  console.log(
-    "Dashboard render - transformedEntries count:",
-    transformedEntries.length
-  );
-  console.log(
-    "Dashboard render - transformedEntries:",
-    transformedEntries.map((e) => ({ id: e.id, title: e.title }))
-  );
 
   // Always include sample entry if no real entries, or show all entries if they exist
   const allEntries =
@@ -467,7 +472,11 @@ const Dashboard = () => {
 
           {filteredEntries.length > 0 ? (
             filteredEntries.map((entry) => (
-              <JournalEntry key={entry.id} entry={entry} />
+              <JournalEntry
+                key={entry.id}
+                entry={entry}
+                onDelete={handleOptimisticDelete}
+              />
             ))
           ) : (
             <Card>

@@ -27,9 +27,10 @@ interface JournalEntryProps {
     content: string;
     aiInsight: string;
   };
+  onDelete?: (id: number) => void; // Callback for when entry is deleted
 }
 
-const JournalEntry = ({ entry }: JournalEntryProps) => {
+const JournalEntry = ({ entry, onDelete }: JournalEntryProps) => {
   const { user } = useAuth();
   const { deleteEntry } = useJournalEntries();
   const [isDeleting, setIsDeleting] = useState(false);
@@ -68,9 +69,17 @@ const JournalEntry = ({ entry }: JournalEntryProps) => {
 
     try {
       setIsDeleting(true);
+
+      // Call the onDelete callback immediately for optimistic UI update
+      if (onDelete) {
+        onDelete(entry.id);
+      }
+
       await deleteEntry(entry.id);
     } catch (error) {
       console.error("Error deleting entry:", error);
+      // If deletion fails and we have a callback, we might want to restore the UI
+      // For now, the hook will handle refreshing the entries
     } finally {
       setIsDeleting(false);
     }
