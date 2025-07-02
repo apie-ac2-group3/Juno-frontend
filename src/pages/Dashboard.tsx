@@ -95,6 +95,16 @@ const Dashboard = () => {
   const location = useLocation();
   const { toast } = useToast();
 
+  // Debug logging
+  console.log("Dashboard render - entries count:", entries.length);
+  console.log(
+    "Dashboard render - entries:",
+    entries.map((e) => ({
+      id: e.journal_entry_id,
+      text: e.text?.substring(0, 50),
+    }))
+  );
+
   // Handle navigation state from AddJournal
   useEffect(() => {
     if (location.state) {
@@ -171,6 +181,15 @@ const Dashboard = () => {
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
     });
+
+  console.log(
+    "Dashboard render - transformedEntries count:",
+    transformedEntries.length
+  );
+  console.log(
+    "Dashboard render - transformedEntries:",
+    transformedEntries.map((e) => ({ id: e.id, title: e.title }))
+  );
 
   // Always include sample entry if no real entries, or show all entries if they exist
   const allEntries =

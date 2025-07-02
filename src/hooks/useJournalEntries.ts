@@ -121,11 +121,16 @@ export const useJournalEntries = () => {
 
     try {
       console.log("Deleting journal entry:", id);
+      console.log("Current entries before delete:", entries.length);
 
       // Optimistically remove the entry from the UI first
-      setEntries((prev) =>
-        prev.filter((entry) => entry.journal_entry_id !== id)
-      );
+      setEntries((prev) => {
+        const newEntries = prev.filter(
+          (entry) => entry.journal_entry_id !== id
+        );
+        console.log("Entries after optimistic delete:", newEntries.length);
+        return newEntries;
+      });
 
       await apiClient.deleteJournal(id);
 
